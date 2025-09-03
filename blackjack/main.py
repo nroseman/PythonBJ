@@ -1,4 +1,4 @@
-from helpers import create_shoe, create_spots, reset, deal_card, update_hands
+from helpers import create_shoe, create_spots, reset, deal_card, update_hand
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -20,10 +20,15 @@ def main():
     # INITIAL DEAL
     for spot in spots:
         deal_card(shoe, spot['hands'][0], 2)
-        update_hands(spot['hands'][0])
+        # CHECK BJ
+        if spot['hands'][0]['total'] == 21:
+            spot['hands'][0]['bj'] = True
     dealer = spots[0]
     players = spots[1:]
-    print(spots)
+
+    for player in players:
+        print(
+            f"player {player['index']}: {player['hands'][0]['cards'][0][1]} {player['hands'][0]['cards'][1][1]} ({player['hands'][0]['total']})")
     # EVALUATE TOTAL, SOFT, BJ
 
     # END OF ROUND

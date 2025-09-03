@@ -26,32 +26,34 @@ def create_shoe(num_decks):
 
 
 def create_spots(NUM_PLAYERS, CHIPS):
-    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'soft': False, 'bj': False}]}
+    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'has_ace': False, 'bj': False, 'bust': False}]}
              for i in range(NUM_PLAYERS + 1)]
     return spots
 
 
 def deal_card(shoe, hand, num_cards):
     for x in range(num_cards):
-        dealt = shoe[:1]
-        hand['cards'].extend(dealt)
+        dealt = shoe[0]
+        hand['cards'].append(dealt)
+        if dealt[0] == 'A':
+            hand['has_ace'] = True
         del shoe[:1]
+        update_hand(hand)
     return True
 
 
 def reset(spots):
     for player in spots:
         player['hands'] = [
-            [{'cards': [], 'total': 0, 'soft': False, 'bj': False}]]
+            [{'cards': [], 'total': 0, 'has_ace': False, 'bj': False, 'bust': False}]]
         return True
 
 
-def update_hands(hand):
+def update_hand(hand):
     # UPDATE TOTAL
-    for card in hand['cards']:
-        hand['total'] += card[1]
-    # CHECK FOR BJ
-    if len(hand['cards']) == 2:
-        if hand['total'] == 21:
-            hand['bj'] = True
+    hand['total'] += hand['cards'][-1][1]
+    # CHECK ACES
+    if hand['total'] > 21:
+        hand['bust'] == True
+    # TODO HANDLE SOFT/HARD ACES
     return
