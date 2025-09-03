@@ -1,4 +1,4 @@
-from helpers import create_shoe, create_spots, reset, deal_card
+from helpers import create_shoe, create_spots, reset, deal_card, update_hands
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -13,16 +13,18 @@ def main():
     # CREATE TABLE
     # NEW SHOE OF CARDS
     shoe = create_shoe(NUM_DECKS)
-    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [CARDS, TOTAL, SOFT, BJ]}?
+    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{CARDS, TOTAL, SOFT, BJ}]}?
     spots = create_spots(NUM_PLAYERS, STARTING_CHIPS)
 
     # START ROUND
     # INITIAL DEAL
     for spot in spots:
-        deal_card(shoe, spot["hands"], 2)
+        deal_card(shoe, spot['hands'][0], 2)
+        update_hands(spot['hands'][0])
     dealer = spots[0]
     players = spots[1:]
-    # EVALUATE
+    print(spots)
+    # EVALUATE TOTAL, SOFT, BJ
 
     # END OF ROUND
     # RESET
