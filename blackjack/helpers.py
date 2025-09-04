@@ -2,6 +2,7 @@ import random
 
 
 def create_shoe(num_decks):
+    # CARD FACES AND VALUES, SUITS IGNORED (FOR NOW)
     cards = [
         {'face': '2', 'value': 2},
         {'face': '3', 'value': 3},
@@ -26,7 +27,7 @@ def create_shoe(num_decks):
 
 
 def create_spots(NUM_PLAYERS, CHIPS):
-    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'has_ace': False, 'bj': False, 'bust': False}]}
+    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'bust': False}]}
              for i in range(NUM_PLAYERS + 1)]
     return spots
 
@@ -36,7 +37,7 @@ def deal_card(shoe, hand, num_cards):
         dealt = shoe[0]
         hand['cards'].append(dealt)
         if dealt[0] == 'A':
-            hand['has_ace'] = True
+            hand['num_soft_ace'] += 1
         del shoe[:1]
         update_hand(hand)
     return True
@@ -45,15 +46,18 @@ def deal_card(shoe, hand, num_cards):
 def reset(spots):
     for player in spots:
         player['hands'] = [
-            [{'cards': [], 'total': 0, 'has_ace': False, 'bj': False, 'bust': False}]]
+            [{'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'bust': False}]]
         return True
 
 
 def update_hand(hand):
     # UPDATE TOTAL
     hand['total'] += hand['cards'][-1][1]
-    # CHECK ACES
+    # CHECK SOFT ACES
+    while hand['num_soft_ace'] and hand['total'] > 21:
+        hand['total'] -= 10
+        hand['num_soft_ace'] -= 1
     if hand['total'] > 21:
         hand['bust'] == True
     # TODO HANDLE SOFT/HARD ACES
-    return
+    return True

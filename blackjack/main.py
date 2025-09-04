@@ -25,12 +25,20 @@ def main():
             spot['hands'][0]['bj'] = True
     dealer = spots[0]
     players = spots[1:]
-
+    # SHOW DEALER'S UPCARD
+    print(f"dealer upcard is: {dealer['hands'][0]['cards'][0][0]}\n")
+    # SHOW PLAYERS' CARDS
     for player in players:
-        print(
-            f"player {player['index']}: {player['hands'][0]['cards'][0][1]} {player['hands'][0]['cards'][1][1]} ({player['hands'][0]['total']})")
-    # EVALUATE TOTAL, SOFT, BJ
-
+        for hand in player['hands']:
+            while hand['total'] < 21:
+                print(f"player {player['index']}:")
+                for card in hand['cards']:
+                    print(card[0], end=" ")
+                print(f"({hand['total']})")
+                action = input(
+                    "What would you like to do (stand/hit)? ").lower()
+                if action == 'hit':
+                    deal_card(shoe, hand, 1)
     # END OF ROUND
     # RESET
     # reset(spots)
