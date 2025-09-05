@@ -1,4 +1,4 @@
-from helpers import create_shoe, create_spots, reset, deal_card, update_hand
+from helpers import create_shoe, create_spots, reset, deal_card, play
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -6,6 +6,8 @@ os.system('cls' if os.name == 'nt' else 'clear')
 NUM_DECKS = 2
 NUM_PLAYERS = 2
 STARTING_CHIPS = 1000
+WAGER = 2
+PAYOUT_BJ = 1.5
 
 
 def main():
@@ -13,93 +15,109 @@ def main():
     # CREATE TABLE
     # NEW SHOE OF CARDS
     shoe = create_shoe(NUM_DECKS)
-    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{CARDS, TOTAL, SOFT, BJ}]}?
+    shoe_penetration = int(len(shoe) * .75)
+    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{CARDS, TOTAL, NUM_SOFT_ACE, BJ}]}
     spots = create_spots(NUM_PLAYERS, STARTING_CHIPS)
+    count_rounds = 0
 
     # START ROUND
-    # INITIAL DEAL
-    for spot in spots:
-        deal_card(shoe, spot['hands'][0], 2)
-        # CHECK BJ
-        if spot['hands'][0]['total'] == 21:
-            spot['hands'][0]['bj'] = True
-    dealer = spots[0]
-    players = spots[1:]
-    # SHOW DEALER'S UPCARD
-    print(f"dealer upcard is: {dealer['hands'][0]['cards'][0][0]}\n")
-    # SHOW PLAYERS' CARDS
-    for player in players:
-        for hand in player['hands']:
-            while hand['total'] < 21:
-                print(f"player {player['index']}:")
-                for card in hand['cards']:
-                    print(card[0], end=" ")
-                print(f"({hand['total']})")
-                action = input(
-                    "What would you like to do (stand/hit)? ").lower()
-                if action == 'hit':
-                    deal_card(shoe, hand, 1)
-    # END OF ROUND
-    # RESET
-    # reset(spots)
+    while len(shoe) >= shoe_penetration:
+        count_rounds += 1
+        print(f"\nRound {count_rounds} Begins!\n")
+        # INITIAL DEAL
+        for spot in spots:
+            deal_card(shoe, spot['hands'][0], 2)
+            # CHECK BJ
+            if spot['hands'][0]['total'] == 21:
+                spot['hands'][0]['bj'] = True
+        dealer = spots[0]
+        players = spots[1:]
 
-    #
+        if dealer['hands'][0]['bj']:
+            print('dealer blackjack')
+        else:
+            for player in players:
+                for hand in player['hands']:
+                    is_active = True
+                    print(f"dealer shows: {dealer['hands'][0]['cards'][0][0]}")
+                    action = ''
+                    while action != 'exit':
+                        # SHOW PLAYER'S HAND
+                        print(f"player {player['index']}:")
+                        for card in hand['cards']:
+                            print(card[0], end=" ")
+                        print(f"({hand['total']}", end="")
+                        if hand['num_soft_ace'] and not hand['bj']:
+                            print(' soft', end="")
+                        print(')')
+                        action = ''
+                        if hand['total'] < 21:
+                            action = input(
+                                "What would you like to do (stand/hit)? ").lower()
+                            if action == 'hit':
+                                deal_card(shoe, hand, 1)
+                            if action == 'stand':
+                                break
+                            if action == 'exit':
+                                exit()
+                        else:
+                            break
+                    if hand['bj']:
+                        print("Blackjack!\n")
+                    elif hand['bust']:
+                        print("bust :(\n")
+                    else:
+                        print('good luck\n')
 
-    # CHOICES
-    # HIT STAND DOUBLE SPLIT
-    # DEAL CARD IF APPLICABLE
+            # DEALER TURN
+            num_busts = 0
+            num_hands = 0
+            for player in players:
+                for hand in player['hands']:
+                    num_hands += 1
+                    if hand['bust']:
+                        num_busts += 1
+            if num_busts != num_hands:
+                play(dealer['hands'][0], shoe)
+        # RESULTS
+        print('dealer has:')
+        for card in dealer['hands'][0]['cards']:
+            print(card[0], end=" ")
+        print(f"({dealer['hands'][0]['total']})")
+        if dealer['hands'][0]['bust']:
+            print('Dealer Busts!')
 
-    # EVALUATE
-    # CHECK TOTAL
-    # CHECK SOFT
-    # CHECK FOR BJ
+        for player in players:
+            count_hand = 1
+            result = ''
+            winnings = 0
+            for hand in player['hands']:
+                if hand['bust']:
+                    result = 'loss'
+                    winnings -= WAGER
+                elif dealer['hands'][0]['bust']:
+                    result = 'win!'
+                    winnings += WAGER
+                elif dealer['hands'][0]['total'] > hand['total']:
+                    result = 'loss'
+                    winnings -= WAGER
+                elif dealer['hands'][0]['total'] == hand['total']:
+                    result = 'push'
+                else:
+                    if hand['bj']:
+                        winnings += (PAYOUT_BJ * WAGER) - WAGER
+                    result = 'win!'
+                    winnings += WAGER
+                player['chips'] += winnings
 
-    # RESOLVE
+                print(
+                    f"player {player['index']} hand {count_hand}: {result} chip count: {int(player['chips'])}")
 
-    # shoe = create_shoe(num_decks)
-    # shoe_length = len(shoe)
-    # shoe_penetration = int(shoe_length * .75)
-    # discard = []
-    # next_action = None
-    # spots = [[] for spot in range(players + 1)]  # TODO make dict instead?
-    # bj = False
-    # soft = False
-
-    # while len(discard) < shoe_penetration:
-    #     # deal two cards to players and dealer
-    #     for x, spot in enumerate(spots):
-    #         bj = False
-    #         soft = False
-    #         spot = shoe[:2]
-    #         discard.extend(spot)
-    #         del shoe[:2]
-
-    #         if x < players:
-    #             total = spot[0][1] + spot[1][1]
-    #             if total == 21:
-    #                 bj = True
-    #             elif "A" in (spot[0][0], spot[1][0]):
-    #                 if total > 21:
-    #                     total -= 10
-    #                 else:
-    #                     soft = True
-
-    #             print(f"Player {x+1}: {spot[0][0]} {spot[1][0]} ", end="")
-    #             if bj:
-    #                 print("blackjack!")
-    #             elif soft:
-    #                 print(f"(soft {total})")
-    #             else:
-    #                 print(f"({total})")
-
-    #         else:
-    #             print(f"\nDealer is showing a {spot[0][0]}\n")
-
-    # TODO Add player options
-    # for player in range(players):
-    #     action = input(f"Player {player+1} (hit, stand)? ")
-
-    # check for win/loss/push
+        # END OF ROUND
+        for spot in spots:
+            spot = reset(spot)
+    # END OF SHOE
+    print("\nEnd of Shoe\n")
 
 
 if __name__ == "__main__":

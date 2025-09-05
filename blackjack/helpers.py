@@ -43,11 +43,11 @@ def deal_card(shoe, hand, num_cards):
     return True
 
 
-def reset(spots):
-    for player in spots:
-        player['hands'] = [
-            [{'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'bust': False}]]
-        return True
+def reset(spot):
+    spot['hands'].clear()
+    spot['hands'] = [{'cards': [], 'total': 0,
+                      'num_soft_ace': 0, 'bj': False, 'bust': False}]
+    return spot
 
 
 def update_hand(hand):
@@ -58,6 +58,19 @@ def update_hand(hand):
         hand['total'] -= 10
         hand['num_soft_ace'] -= 1
     if hand['total'] > 21:
-        hand['bust'] == True
+        hand['bust'] = True
     # TODO HANDLE SOFT/HARD ACES
     return True
+
+
+def play(hand, shoe):
+
+    while not hand['bust']:
+        if hand['num_soft_ace'] > 0:
+            min_score = 18
+        else:
+            min_score = 17
+        if hand['total'] < min_score:
+            deal_card(shoe, hand, 1)
+        else:
+            return True
