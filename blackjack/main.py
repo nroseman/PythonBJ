@@ -3,7 +3,7 @@ import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
-NUM_DECKS = 2
+NUM_DECKS = 4
 NUM_PLAYERS = 2
 STARTING_CHIPS = 1000
 WAGER = 2
@@ -21,8 +21,8 @@ def main():
     # CREATE TABLE
     # NEW SHOE OF CARDS
     shoe = create_shoe(NUM_DECKS)
-    shoe_penetration = int(len(shoe) * .75)
-    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{CARDS, TOTAL, NUM_SOFT_ACE, BJ, CAN_SPILT}]}
+    shoe_penetration = int(len(shoe) * .3)
+    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{CARDS, TOTAL, NUM_SOFT_ACE, CAN_DOUBLE, BJ, CAN_SPILT}]}
     spots = create_spots(NUM_PLAYERS, STARTING_CHIPS)
     count_rounds = 0
 
@@ -72,7 +72,16 @@ def main():
                                 deal_card(shoe, hand, 1)
                                 # TODO NEED TO SHOW TOTAL AND CARDS AFTER DOUBLE
                                 break
-                            # TODO ADD ACTION == SPLIT
+                            if action == 'split' and hand['can_split']:
+                                # TODO NEED TO ACCOUNT FOR SPLIT ACES IN NUM_SOFT_ACES
+                                c1, c2 = hand['cards']
+                                hand = {'cards': [c1], 'total': c1[1], 'num_soft_ace': 0, 'bj': False,
+                                        'can_split': False, 'can_double': False, 'bust': False}
+                                deal_card(shoe, hand, 1)
+                                player['hands'].append({'cards': [
+                                                       c2], 'total': c2[1], 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'bust': False})
+                                deal_card(shoe, player['hands'][-1], 1)
+
                             if action == 'exit':
                                 exit()
                         else:
@@ -102,6 +111,7 @@ def main():
         if dealer['hands'][0]['bust']:
             print('Dealer Busts!')
 
+        print('\nRESULTS\n')
         for player in players:
             count_hand = 1
             result = ''
@@ -127,6 +137,7 @@ def main():
 
                 print(
                     f"player {player['index']} hand {count_hand}: {result} chip count: {int(player['chips'])}")
+                count_hand += 1
 
         # END OF ROUND
         for spot in spots:

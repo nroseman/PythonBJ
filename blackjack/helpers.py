@@ -83,7 +83,7 @@ def check_bj(hand):
 
 
 def check_split(hand):
-    if hand['cards'][0][0] == hand['cards'][1][0]:
+    if hand['cards'][0][1] == hand['cards'][1][1]:
         hand['can_split'] = True
     return True
 
