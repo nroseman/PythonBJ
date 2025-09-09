@@ -1,9 +1,9 @@
-from helpers import create_shoe, create_spots, reset, deal_card, play, check_bj, check_split, get_actions
+from helpers import create_shoe, create_spots, reset, deal_card, play, check_bj, check_split, get_actions, show_hand
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
-NUM_DECKS = 4
+NUM_DECKS = 2
 NUM_PLAYERS = 2
 STARTING_CHIPS = 1000
 WAGER = 2
@@ -22,7 +22,7 @@ def main():
     # NEW SHOE OF CARDS
     shoe = create_shoe(NUM_DECKS)
     shoe_penetration = int(len(shoe) * .3)
-    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{CARDS, TOTAL, NUM_SOFT_ACE, CAN_DOUBLE, BJ, CAN_SPILT}]}
+    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{IDX, CARDS, TOTAL, NUM_SOFT_ACE, BJ, CAN_SPILT, CAN_DOUBLE, BUST}]}
     spots = create_spots(NUM_PLAYERS, STARTING_CHIPS)
     count_rounds = 0
 
@@ -43,47 +43,29 @@ def main():
         # PLAYER DECISION LOOP
         else:
             for player in players:
+                print(f"player {player['index']}:")
                 for hand in player['hands']:
+                    print(
+                        f"dealer shows: {dealer['hands'][0]['cards'][0][0]}\n")
+                    if len(player['hands']) > 1:
+                        print(f"hand {hand['idx']}")
                     action = None
                     is_active = True
                     check_bj(hand)
                     check_split(hand)
-                    print(f"dealer shows: {dealer['hands'][0]['cards'][0][0]}")
-                    while action != 'exit':
+                    next_action = ''
+                    while next_action != 'end':
                         actions = get_actions(hand)
                         # SHOW PLAYER'S HAND
-                        print(f"player {player['index']}:")
-                        for card in hand['cards']:
-                            print(card[0], end=" ")
-                        print(f"({hand['total']}", end="")
-                        if hand['num_soft_ace'] and not hand['bj']:
-                            print(' soft', end="")
-                        print(')')
+                        print('Your cards:')
+                        show_hand(hand)
                         # PLAYER INPUT DECISION
                         if hand['total'] < 21:
                             options = get_actions(hand)
                             action = input(
-                                f"What would you like to do {options}? ").lower()
-                            if action == 'hit':
-                                deal_card(shoe, hand, 1)
-                            if action == 'stand':
-                                break
-                            if action == 'double' and hand['can_double']:
-                                deal_card(shoe, hand, 1)
-                                # TODO NEED TO SHOW TOTAL AND CARDS AFTER DOUBLE
-                                break
-                            if action == 'split' and hand['can_split']:
-                                # TODO NEED TO ACCOUNT FOR SPLIT ACES IN NUM_SOFT_ACES
-                                c1, c2 = hand['cards']
-                                hand = {'cards': [c1], 'total': c1[1], 'num_soft_ace': 0, 'bj': False,
-                                        'can_split': False, 'can_double': False, 'bust': False}
-                                deal_card(shoe, hand, 1)
-                                player['hands'].append({'cards': [
-                                                       c2], 'total': c2[1], 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'bust': False})
-                                deal_card(shoe, player['hands'][-1], 1)
-
-                            if action == 'exit':
-                                exit()
+                                f"\nWhat would you like to do {options}? ").lower()
+                            next_action = play(
+                                hand, shoe, action=action, player=player)
                         else:
                             break
                     if hand['bj']:

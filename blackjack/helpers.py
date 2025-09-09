@@ -27,7 +27,8 @@ def create_shoe(num_decks):
 
 
 def create_spots(NUM_PLAYERS, CHIPS):
-    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'bust': False}]}
+    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'idx': 0, 'cards': [], 'total': 0, 'num_soft_ace': 0,
+                                                     'bj': False, 'can_split': False, 'can_double': False, 'bust': False}]}
              for i in range(NUM_PLAYERS + 1)]
     return spots
 
@@ -45,7 +46,7 @@ def deal_card(shoe, hand, num_cards):
 
 def reset(spot):
     spot['hands'].clear()
-    spot['hands'] = [{'cards': [], 'total': 0, 'num_soft_ace': 0,
+    spot['hands'] = [{'idx': 0, 'cards': [], 'total': 0, 'num_soft_ace': 0,
                       'bj': False, 'can_split': False, 'can_double': False, 'bust': False}]
     return spot
 
@@ -63,17 +64,39 @@ def update_hand(hand):
     return True
 
 
-def play(hand, shoe):
-
-    while not hand['bust']:
-        if hand['num_soft_ace'] > 0:
-            min_score = 18
-        else:
-            min_score = 17
-        if hand['total'] < min_score:
+def play(hand, shoe, action=None, player=False):
+    # DEALER
+    if not player:
+        while not hand['bust']:
+            if hand['num_soft_ace'] > 0:
+                min_score = 18
+            else:
+                min_score = 17
+            if hand['total'] < min_score:
+                deal_card(shoe, hand, 1)
+            else:
+                return True
+    # PLAYER
+    else:
+        if action == 'hit':
             deal_card(shoe, hand, 1)
-        else:
-            return True
+        if action == 'stand':
+            return 'end'
+        if action == 'double' and hand['can_double']:
+            deal_card(shoe, hand, 1)
+            # TODO NEED TO SHOW TOTAL AND CARDS AFTER DOUBLE
+            return 'end'
+        if action == 'split' and hand['can_split']:
+            # TODO NEED TO ACCOUNT FOR SPLIT ACES IN NUM_SOFT_ACES
+            c1, c2 = hand['cards']
+            hand = {'cards': [c1], 'total': c1[1], 'num_soft_ace': 0, 'bj': False,
+                    'can_split': False, 'can_double': False, 'bust': False}
+            deal_card(shoe, hand, 1)
+            player['hands'].append({'cards': [
+                c2], 'total': c2[1], 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'bust': False})
+            deal_card(shoe, player['hands'][-1], 1)
+        if action == 'exit':
+            exit()
 
 
 def check_bj(hand):
@@ -101,3 +124,13 @@ def get_actions(hand):
         hand['can_split'] = False
         hand['can_double'] = False
     return actions
+
+
+def show_hand(hand):
+    for card in hand['cards']:
+        print(card[0], end=" ")
+    print(f"({hand['total']}", end="")
+    if hand['num_soft_ace'] and not hand['bj']:
+        print(' soft', end="")
+    print(')')
+    return True
