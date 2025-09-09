@@ -27,19 +27,28 @@ def create_shoe(num_decks):
 
 
 def create_spots(NUM_PLAYERS, CHIPS):
-    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'idx': 0, 'cards': [], 'total': 0, 'num_soft_ace': 0,
-                                                     'bj': False, 'can_split': False, 'can_double': False, 'bust': False}]}
+    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'idx': i, 'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'doubled': False, 'bust': False}]}
              for i in range(NUM_PLAYERS + 1)]
     return spots
 
 
-def deal_card(shoe, hand, num_cards):
+def new_hand(hands):
+    index = len(hands)
+    hands.append({'idx': index, 'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False,
+                 'can_split': False, 'can_double': False, 'doubled': False, 'bust': False})
+    return True
+
+
+def deal_card(shoe, hand, num_cards, card=None):
     for x in range(num_cards):
-        dealt = shoe[0]
+        if card != None:
+            dealt = card
+        else:
+            dealt = shoe[0]
+            del shoe[:1]
         hand['cards'].append(dealt)
         if dealt[0] == 'A':
             hand['num_soft_ace'] += 1
-        del shoe[:1]
         update_hand(hand)
     return True
 
@@ -47,7 +56,7 @@ def deal_card(shoe, hand, num_cards):
 def reset(spot):
     spot['hands'].clear()
     spot['hands'] = [{'idx': 0, 'cards': [], 'total': 0, 'num_soft_ace': 0,
-                      'bj': False, 'can_split': False, 'can_double': False, 'bust': False}]
+                      'bj': False, 'can_split': False, 'can_double': False, 'doubled': False, 'bust': False}]
     return spot
 
 
@@ -84,17 +93,17 @@ def play(hand, shoe, action=None, player=False):
             return 'end'
         if action == 'double' and hand['can_double']:
             deal_card(shoe, hand, 1)
-            # TODO NEED TO SHOW TOTAL AND CARDS AFTER DOUBLE
+            hand['doubled'] = True
+            show_hand(hand)
             return 'end'
+        # TODO FIX THIS - ISSUES WITH INDEXING AND REFERENCES
         if action == 'split' and hand['can_split']:
-            # TODO NEED TO ACCOUNT FOR SPLIT ACES IN NUM_SOFT_ACES
-            c1, c2 = hand['cards']
-            hand = {'cards': [c1], 'total': c1[1], 'num_soft_ace': 0, 'bj': False,
-                    'can_split': False, 'can_double': False, 'bust': False}
-            deal_card(shoe, hand, 1)
-            player['hands'].append({'cards': [
-                c2], 'total': c2[1], 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'bust': False})
-            deal_card(shoe, player['hands'][-1], 1)
+            cards = hand['cards']
+            player['hands'].pop(hand['idx'])
+            for card in cards:
+                new_hand(player['hands'])
+                deal_card(shoe, player['hands'][-1], 1, card)
+                deal_card(shoe, hand, 1)
         if action == 'exit':
             exit()
 
@@ -105,9 +114,11 @@ def check_bj(hand):
     return True
 
 
-def check_split(hand):
-    if hand['cards'][0][1] == hand['cards'][1][1]:
-        hand['can_split'] = True
+def check_split_double(hand):
+    if len(hand['cards']) == 2:
+        if hand['cards'][0][1] == hand['cards'][1][1]:
+            hand['can_split'] = True
+        hand['can_double'] = True
     return True
 
 

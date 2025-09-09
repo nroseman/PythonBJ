@@ -1,4 +1,4 @@
-from helpers import create_shoe, create_spots, reset, deal_card, play, check_bj, check_split, get_actions, show_hand
+from helpers import create_shoe, create_spots, reset, deal_card, play, check_bj, check_split_double, get_actions, show_hand
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -47,20 +47,18 @@ def main():
                 for hand in player['hands']:
                     print(
                         f"dealer shows: {dealer['hands'][0]['cards'][0][0]}\n")
-                    if len(player['hands']) > 1:
-                        print(f"hand {hand['idx']}")
                     action = None
-                    is_active = True
                     check_bj(hand)
-                    check_split(hand)
                     next_action = ''
                     while next_action != 'end':
-                        actions = get_actions(hand)
+                        if len(player['hands']) > 1:
+                            print(f"hand {hand['idx']}")
                         # SHOW PLAYER'S HAND
                         print('Your cards:')
                         show_hand(hand)
                         # PLAYER INPUT DECISION
                         if hand['total'] < 21:
+                            check_split_double(hand)
                             options = get_actions(hand)
                             action = input(
                                 f"\nWhat would you like to do {options}? ").lower()
