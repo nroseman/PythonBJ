@@ -27,7 +27,7 @@ def create_shoe(num_decks):
 
 
 def create_spots(NUM_PLAYERS, CHIPS):
-    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'bust': False}]}
+    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'bust': False}]}
              for i in range(NUM_PLAYERS + 1)]
     return spots
 
@@ -45,8 +45,8 @@ def deal_card(shoe, hand, num_cards):
 
 def reset(spot):
     spot['hands'].clear()
-    spot['hands'] = [{'cards': [], 'total': 0,
-                      'num_soft_ace': 0, 'bj': False, 'bust': False}]
+    spot['hands'] = [{'cards': [], 'total': 0, 'num_soft_ace': 0,
+                      'bj': False, 'can_split': False, 'can_double': False, 'bust': False}]
     return spot
 
 
@@ -74,3 +74,30 @@ def play(hand, shoe):
             deal_card(shoe, hand, 1)
         else:
             return True
+
+
+def check_bj(hand):
+    if hand['total'] == 21:
+        hand['bj'] = True
+    return True
+
+
+def check_split(hand):
+    if hand['cards'][0][0] == hand['cards'][1][0]:
+        hand['can_split'] = True
+    return True
+
+
+def get_actions(hand):
+    actions = ['hit', 'stand']
+    if len(hand['cards']) == 2:
+        if hand['can_split']:
+            actions.append('split')
+        if hand['can_double']:
+            actions.append('double')
+        hand['can_double'] = True
+    else:
+        hand['bj'] = False
+        hand['can_split'] = False
+        hand['can_double'] = False
+    return actions
