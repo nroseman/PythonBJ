@@ -27,7 +27,7 @@ def create_shoe(num_decks):
 
 
 def create_spots(NUM_PLAYERS, CHIPS):
-    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'idx': i, 'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'doubled': False, 'bust': False}]}
+    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'idx': 0, 'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'can_split': False, 'can_double': False, 'doubled': False, 'bust': False}]}
              for i in range(NUM_PLAYERS + 1)]
     return spots
 
@@ -44,8 +44,7 @@ def deal_card(shoe, hand, num_cards, card=None):
         if card != None:
             dealt = card
         else:
-            dealt = shoe[0]
-            del shoe[:1]
+            dealt = shoe.pop(0)
         hand['cards'].append(dealt)
         if dealt[0] == 'A':
             hand['num_soft_ace'] += 1
@@ -87,6 +86,8 @@ def play(hand, shoe, action=None, player=False):
                 return True
     # PLAYER
     else:
+        player_current = player
+        hand_current = player['hands']
         if action == 'hit':
             deal_card(shoe, hand, 1)
         if action == 'stand':
@@ -96,14 +97,14 @@ def play(hand, shoe, action=None, player=False):
             hand['doubled'] = True
             show_hand(hand)
             return 'end'
-        # TODO FIX THIS - ISSUES WITH INDEXING AND REFERENCES
         if action == 'split' and hand['can_split']:
             cards = hand['cards']
-            player['hands'].pop(hand['idx'])
-            for card in cards:
+            player['hands'].remove(hand)
+            for x in range(2):
                 new_hand(player['hands'])
-                deal_card(shoe, player['hands'][-1], 1, card)
-                deal_card(shoe, hand, 1)
+                deal_card(shoe, player['hands'][-1], 1, cards[0])
+                deal_card(shoe, player['hands'][-1], 1)
+            print(player['hands'])
         if action == 'exit':
             exit()
 

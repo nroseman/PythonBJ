@@ -44,6 +44,7 @@ def main():
         else:
             for player in players:
                 print(f"player {player['index']}:")
+                # TODO HAND REFERENCE INVALID AFTER SPLIT
                 for hand in player['hands']:
                     print(
                         f"dealer shows: {dealer['hands'][0]['cards'][0][0]}\n")
