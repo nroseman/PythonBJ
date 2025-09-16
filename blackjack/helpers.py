@@ -26,17 +26,23 @@ def create_shoe(num_decks):
     return shoe
 
 
-def create_spots(NUM_PLAYERS, CHIPS):
-    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'idx': 0, 'cards': [], 'total': 0, 'num_soft_ace': 0, 'bj': False, 'result': ''}]}
+def create_spots(NUM_PLAYERS, CHIPS, wager):
+    spots = [{'index': i, 'chips': CHIPS, 'hands': [{'cards': [], 'total': 0, 'num_soft_ace': 0, 'bet': wager, 'result': ''}]}
              for i in range(NUM_PLAYERS + 1)]
     return spots
 
 
-def new_hand(hands):
-    index = len(hands)
-    hands.append({'idx': index, 'cards': [], 'total': 0,
-                 'num_soft_ace': 0, 'bj': False, 'result': ''})
+def new_hand(hands, idx, wager):
+    hands.insert(idx, {'cards': [], 'total': 0,
+                 'num_soft_ace': 0, 'bet': wager, 'result': ''})
     return True
+
+
+def reset(spot, wager):
+    spot['hands'].clear()
+    spot['hands'] = [{'cards': [], 'total': 0,
+                      'num_soft_ace': 0, 'bet': wager, 'result': ''}]
+    return spot
 
 
 def deal_card(shoe, hand, num_cards, card=None):
@@ -52,13 +58,6 @@ def deal_card(shoe, hand, num_cards, card=None):
     return True
 
 
-def reset(spot):
-    spot['hands'].clear()
-    spot['hands'] = [{'idx': 0, 'cards': [], 'total': 0,
-                      'num_soft_ace': 0, 'bj': False, 'result': ''}]
-    return spot
-
-
 def update_hand(hand):
     # UPDATE TOTAL
     hand['total'] += hand['cards'][-1][1]
@@ -68,43 +67,6 @@ def update_hand(hand):
         hand['num_soft_ace'] -= 1
     return True
 
-# Outdated
-# def play(hand, action):
-#     # DEALER
-#     if not player:
-#         while not hand['bust']:
-#             if hand['num_soft_ace'] > 0:
-#                 min_score = 18
-#             else:
-#                 min_score = 17
-#             if hand['total'] < min_score:
-#                 deal_card(shoe, hand, 1)
-#             else:
-#                 return True
-#     # PLAYER
-#     else:
-#         player_current = player
-#         hand_current = player['hands']
-#         if action == 'hit':
-#             deal_card(shoe, hand, 1)
-#         if action == 'stand':
-#             return 'end'
-#         if action == 'double' and hand['can_double']:
-#             deal_card(shoe, hand, 1)
-#             hand['doubled'] = True
-#             show_hand(hand)
-#             return 'end'
-#         if action == 'split' and hand['can_split']:
-#             cards = hand['cards']
-#             player['hands'].remove(hand)
-#             for x in range(2):
-#                 new_hand(player['hands'])
-#                 deal_card(shoe, player['hands'][-1], 1, cards[x])
-#                 deal_card(shoe, player['hands'][-1], 1)
-#             print(player['hands'])
-#         if action == 'exit':
-#             exit()
-
 
 def check_bj(hand):
     if len(hand['cards']) == 2:
@@ -113,13 +75,27 @@ def check_bj(hand):
     return False
 
 
-def get_actions(hand):
+def get_actions(hand, is_dealer=False):
     actions = []
 
     if hand['total'] > 21:
         return 'bust'
+    # DEALER ONLY
+    if is_dealer:
+        if hand['num_soft_ace'] > 0:
+            min_score = 18
+        else:
+            min_score = 17
+        if hand['total'] < min_score:
+            return 'hit'
+        else:
+            return 'stand'
+    # PLAYER ONLY
     if hand['result'] == 'double':
+        show_hand(hand)
         return 'stand'
+    if hand['result'] == 'blackjack':
+        return 'blackjack'
 
     if hand['total'] < 21:
         actions.append('hit')
@@ -130,8 +106,6 @@ def get_actions(hand):
         if hand['cards'][0][1] == hand['cards'][1][1]:
             actions.append('split')
         actions.append('double')
-        if check_bj(hand):
-            return 'blackjack'
 
     # Get Player Choice
     show_hand(hand)
@@ -145,10 +119,10 @@ def get_actions(hand):
         return 'invalid'
 
 
-def resolve_action(hand, next_action, shoe):
+def resolve_action(hand, next_action, shoe, hand_idx, player, is_dealer=False):
     if next_action == 'bust':
         show_hand(hand)
-        print('bust:(')
+        print('bust')
         hand['result'] = 'bust'
         return 'bust'
     if next_action == 'blackjack':
@@ -160,16 +134,25 @@ def resolve_action(hand, next_action, shoe):
         deal_card(shoe, hand, 1)
         hand['result'] = ''
     if next_action == 'stand':
+        if is_dealer:
+            show_hand(hand)
         hand['result'] = 'stand'
         return 'stand'
     if next_action == 'double':
-        # TODO double wager
         deal_card(shoe, hand, 1)
-        show_hand(hand)
+        hand['bet'] *= 2
         hand['result'] = 'double'
         return 'double'
     if next_action == 'split':
-        # TODO add option
+        cards = hand['cards']
+        bet = hand['bet']
+        player['hands'].remove(player['hands'][hand_idx])
+        for x in range(2):
+            new_hand(player['hands'], hand_idx + x, bet)
+            deal_card(shoe, player['hands'][hand_idx + x], 1, cards[x])
+            deal_card(shoe, player['hands'][hand_idx + x], 1)
+        print('spliting')
+        print(player['hands'])
         return 'split'
 
 
@@ -177,7 +160,45 @@ def show_hand(hand):
     for card in hand['cards']:
         print(card[0], end=" ")
     print(f"({hand['total']}", end="")
-    if hand['num_soft_ace']:
+    if hand['num_soft_ace'] and hand['total'] != 21:
         print(' soft', end="")
     print(')')
     return True
+
+
+def results(dealer_hand, players, PAYOUT_BJ):
+    print('\nROUND RESULTS:')
+    # DEALER HAS BLACKJACK
+    if dealer_hand == 'blackjack':
+        for player in players:
+            for hand in player['hands']:
+                if hand['result'] == 'blackjack':
+                    player['chips'] -= hand['bet']
+                    hand['result'] = 'loss'
+                else:
+                    hand['result'] = 'push'
+                print(
+                    f"Player {player['index']} Hand {hand_idx} Result: {hand['result']} Chips: {player['chips']}")
+    # NO DEALER BLACKJACK
+    else:
+        for player in players:
+            hand_idx = 1
+            for hand in player['hands']:
+                if hand['result'] == 'blackjack':
+                    player['chips'] += int(hand['bet'] * PAYOUT_BJ)
+                if hand['result'] == 'bust':
+                    player['chips'] -= hand['bet']
+                    hand['result'] = 'loss'
+                elif dealer_hand['result'] == 'bust':
+                    player['chips'] += hand['bet']
+                    hand['result'] = 'win'
+                elif dealer_hand['total'] > hand['total']:
+                    player['chips'] -= hand['bet']
+                    hand['result'] = 'loss'
+                elif dealer_hand['total'] < hand['total']:
+                    player['chips'] += hand['bet']
+                    hand['result'] = 'win'
+                else:
+                    hand['result'] = 'push'
+                print(
+                    f"Player {player['index']} Hand {hand_idx} Result: {hand['result']} Chips: {player['chips']}")

@@ -1,4 +1,4 @@
-from helpers import create_shoe, create_spots, reset, deal_card, check_bj, resolve_action, get_actions, show_hand
+from helpers import create_shoe, create_spots, reset, deal_card, check_bj, resolve_action, get_actions, results, show_hand
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -11,7 +11,7 @@ PAYOUT_BJ = 1.5
 
 # TODO:
 #   OFFER INSURANCE
-#   DEALER PLAY AND HAND RESULTS
+#   SHOW CARDS IN RESULTS
 
 
 def main():
@@ -20,40 +20,69 @@ def main():
     # NEW SHOE OF CARDS
     shoe = create_shoe(NUM_DECKS)
     shoe_penetration = int(len(shoe) * .3)
-    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{IDX, CARDS, TOTAL, NUM_SOFT_ACE, BJ, CAN_SPILT, CAN_DOUBLE, BUST}]}
-    spots = create_spots(NUM_PLAYERS, STARTING_CHIPS)
+    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{IDX, CARDS, TOTAL, NUM_SOFT_ACE, RESULT, BET}]}
+    spots = create_spots(NUM_PLAYERS, STARTING_CHIPS, WAGER)
     count_rounds = 0
 
     # START ROUND
     while len(shoe) >= shoe_penetration:
         count_rounds += 1
-        print(f"\nRound {count_rounds} Begins!\n")
+        print(f"\n***Round {count_rounds} Begins!***")
         # INITIAL DEAL
         for spot in spots:
             deal_card(shoe, spot['hands'][0], 2)
+            if check_bj(spot['hands'][0]):
+                spot['hands'][0]['result'] = 'blackjack'
 
         dealer = spots[0]
         players = spots[1:]
-        dealer_up_card = dealer['hands'][0]['cards'][0][0]
 
-        check_bj(dealer['hands'][0])
-        if dealer['hands'][0]['bj']:
+        dealer_hand = dealer['hands'][0]
+        dealer_up_card = dealer_hand['cards'][0][0]
+
+        # DEALER BLACKJACK
+        if dealer_hand['result'] == 'blackjack':
             print('dealer blackjack')
 
-        # PLAYER DECISION LOOP
+        # PLAYER LOOP
         else:
+            num_busts = 0
+            num_total_hands = 0
             for player in players:
+                print(f"\nPlayer {player['index']}")
+                print(f"Dealer shows: {dealer_up_card}")
                 curr_hand = 1
                 while curr_hand <= len(player['hands']):
-                    hand = player['hands'][curr_hand - 1]
+                    hand_idx = curr_hand - 1
+                    print(f"Hand {curr_hand}")
+                    hand = player['hands'][hand_idx]
                     next_action = get_actions(hand)
-                    resolve_action(hand, next_action, shoe)
-                    if hand['result'] != '' and hand['result'] != 'split':
+                    resolve_action(hand, next_action, shoe, hand_idx, player)
+                    if hand['result'] != '' and hand['result'] != 'split' and hand['result'] != 'double':
                         curr_hand += 1
+                        num_total_hands += 1
+                        if hand['result'] == 'bust':
+                            num_busts += 1
+
+            # DEALER PLAY
+            if num_busts < num_total_hands:
+                print('Dealers turn')
+                while dealer_hand['result'] != 'bust' and dealer_hand['result'] != 'stand':
+                    hand = dealer_hand
+                    next_action = get_actions(hand, is_dealer=True)
+                    resolve_action(hand, next_action, shoe,
+                                   0, dealer, is_dealer=True)
+            else:
+                print('Dealer had:')
+                show_hand(dealer_hand)
 
         # END OF ROUND
+        # RESULTS
+        results(dealer_hand, players, PAYOUT_BJ)
+
+        # CLEAR SPOTS
         for spot in spots:
-            spot = reset(spot)
+            spot = reset(spot, WAGER)
     # END OF SHOE
     print("\nEnd of Shoe\n")
 
