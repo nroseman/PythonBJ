@@ -1,4 +1,4 @@
-from helpers import create_shoe, create_spots, reset, deal_card, check_bj, resolve_action, get_actions, results, show_hand
+from helpers import create_shoe, create_spots, reset, deal_card, check_bj, resolve_action, get_actions, results, show_hand, get_wagers
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -6,7 +6,7 @@ os.system('cls' if os.name == 'nt' else 'clear')
 NUM_DECKS = 2
 NUM_PLAYERS = 2
 STARTING_CHIPS = 1000
-WAGER = 2
+MIN_WAGER = 2
 PAYOUT_BJ = 1.5
 
 # TODO:
@@ -20,14 +20,15 @@ def main():
     # NEW SHOE OF CARDS
     shoe = create_shoe(NUM_DECKS)
     shoe_penetration = int(len(shoe) * .3)
-    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{IDX, CARDS, TOTAL, NUM_SOFT_ACE, RESULT, BET}]}
-    spots = create_spots(NUM_PLAYERS, STARTING_CHIPS, WAGER)
+    # SETUP PLAYERS {INDEX, CHIPS, HANDS: [{CARDS, TOTAL, NUM_SOFT_ACE, RESULT, BET}]}
+    spots = create_spots(NUM_PLAYERS, STARTING_CHIPS, MIN_WAGER)
     count_rounds = 0
 
     # START ROUND
     while len(shoe) >= shoe_penetration:
         count_rounds += 1
-        print(f"\n***Round {count_rounds} Begins!***")
+        print(f"\n***Round {count_rounds} Begins!***\n")
+
         # INITIAL DEAL
         for spot in spots:
             deal_card(shoe, spot['hands'][0], 2)
@@ -37,8 +38,18 @@ def main():
         dealer = spots[0]
         players = spots[1:]
 
+        get_wagers(players, MIN_WAGER)
+
         dealer_hand = dealer['hands'][0]
         dealer_up_card = dealer_hand['cards'][0][0]
+
+        # SHOW STARTING HANDS
+        for player in players:
+            for hand in player['hands']:
+                print(f"Player {player['index']} Hand: ", end='')
+                show_hand(hand)
+        print(f"Dealer up card: {dealer_up_card}")
+        print('---------')
 
         # DEALER BLACKJACK
         if dealer_hand['result'] == 'blackjack':
@@ -82,7 +93,7 @@ def main():
 
         # CLEAR SPOTS
         for spot in spots:
-            spot = reset(spot, WAGER)
+            spot = reset(spot, MIN_WAGER)
     # END OF SHOE
     print("\nEnd of Shoe\n")
 

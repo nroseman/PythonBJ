@@ -32,6 +32,20 @@ def create_spots(NUM_PLAYERS, CHIPS, wager):
     return spots
 
 
+def get_wagers(players, MIN_WAGER):
+    min_bet = MIN_WAGER
+    for player in players:
+        max_bet = player['chips']
+        print(f"Minimun bet: {min_bet}  Max bet(your chips): {max_bet}")
+        amount_bet = int(input(f"Player {player['index']} what is your bet? "))
+        if min_bet <= amount_bet <= max_bet:
+            player['hands'][0]['bet'] = amount_bet
+        else:
+            print('your bet was sloppy. You are capped at the minimum.')
+    print('\n')
+    return True
+
+
 def new_hand(hands, idx, wager):
     hands.insert(idx, {'cards': [], 'total': 0,
                  'num_soft_ace': 0, 'bet': wager, 'result': ''})
