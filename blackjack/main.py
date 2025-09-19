@@ -1,4 +1,4 @@
-from helpers import create_shoe, create_spots, reset, deal_card, check_bj, resolve_action, get_actions, results, show_hand, get_wagers
+from helpers import create_shoe, create_spots, reset, deal_card, check_bj, resolve_action, get_actions, results, show_hand, get_wagers, results_to_file
 import os
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -90,6 +90,7 @@ def main():
         # END OF ROUND
         # RESULTS
         results(dealer_hand, players, PAYOUT_BJ)
+        results_to_file(spots, count_rounds)
 
         # CLEAR SPOTS
         for spot in spots:

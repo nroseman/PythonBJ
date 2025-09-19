@@ -185,6 +185,7 @@ def results(dealer_hand, players, PAYOUT_BJ):
     # DEALER HAS BLACKJACK
     if dealer_hand == 'blackjack':
         for player in players:
+            hand_idx = 1
             for hand in player['hands']:
                 if hand['result'] == 'blackjack':
                     player['chips'] -= hand['bet']
@@ -192,7 +193,8 @@ def results(dealer_hand, players, PAYOUT_BJ):
                 else:
                     hand['result'] = 'push'
                 print(
-                    f"Player {player['index']} Hand {hand_idx} Result: {hand['result']} Chips: {player['chips']}")
+                    f"Player {player['index']} Hand {hand_idx} {*[cards[1] for cards in hand['cards']],} Result: {hand['result']} Chips: {player['chips']}")
+                hand_idx += 1
     # NO DEALER BLACKJACK
     else:
         for player in players:
@@ -215,4 +217,22 @@ def results(dealer_hand, players, PAYOUT_BJ):
                 else:
                     hand['result'] = 'push'
                 print(
-                    f"Player {player['index']} Hand {hand_idx} Result: {hand['result']} Chips: {player['chips']}")
+                    f"Player {player['index']} Hand {hand_idx} {*[cards[0] for cards in hand['cards']],} Result: {hand['result']} Chips: {player['chips']}")
+                hand_idx += 1
+
+
+def results_to_file(players, round):
+    with open('results.txt', 'a') as f:
+        f.write(f"Round {round}\n")
+        for player in players:
+            hand_idx = 1
+            for hand in player['hands']:
+                if player['index'] == 0:
+                    f.write(
+                        f"Dealer {*[cards[0] for cards in hand['cards']],} Result: {hand['result']}\n")
+                else:
+                    f.write(
+                        f"Player {player['index']} Hand {hand_idx} {*[cards[0] for cards in hand['cards']],} Result: {hand['result']} Chips: {player['chips']}\n")
+                hand_idx += 1
+        f.write('-----------------\n')
+    return None
