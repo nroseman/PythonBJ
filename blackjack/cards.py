@@ -26,7 +26,7 @@ class Card:
 class Deck:
     def __init__(self):
         self.deck = []
-        self.suits = ('H', 'D', 'C', 'S')
+        self.suits = ('\u2661', '\u2662', '\u2667', '\u2664')
         self.rank = {1: ('A', 11), 11: ('J', 10), 12: ('Q', 10), 13: ('K', 10)}
 
         self.make_deck()
