@@ -44,7 +44,10 @@ class Table:
             for spot in self.spots:
                 for hand in spot.hands:
                     hand.get_card(self.shoe.deal_card())
+                    hand.check_bj()
             self.dealer.hands[0].get_card(self.shoe.deal_card())
+            self.dealer.hands[0].check_bj()
+
         self.dealer.set_up_card()
 
     def start_round(self):
@@ -62,10 +65,10 @@ class Table:
 
         self.dealer.show_up_card()
 
-        for x, spot in enumerate(self.spots):
-            print(f"Spot {x+1} ", end='')
+        for spot in self.spots:
+            print(f"Spot {spot.index} ", end='')
             for hand in spot.hands:
-                print(hand)
+                hand.show()
 
     def show_curr(self):
         return
@@ -77,13 +80,7 @@ class Table:
         # Players Turns
         for spot in self.spots:
             while spot.is_playing:
-                # Show table condition
-
-                # Get Next Action
-                # Resolve Action
-                # Continue or Next
-                spot.play()
-                break
+                spot.play(self.dealer, self.shoe)
         return
 
     def __str__(self):

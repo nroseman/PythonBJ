@@ -8,9 +8,7 @@ class Card:
         self.face = self.rank + self.suit
         self.value = value
         self.is_ace = False
-        self.is_soft = False
         if self.rank == 'A':
-            self.is_ace = True
             self.is_soft = True
 
     def __str__(self):
