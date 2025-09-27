@@ -81,6 +81,8 @@ class Table:
         for spot in self.spots:
             while spot.is_playing:
                 spot.play(self.dealer, self.shoe)
+        # Dealer Plays
+        self.dealer.play(self.spots, self.shoe)
         return
 
     def __str__(self):

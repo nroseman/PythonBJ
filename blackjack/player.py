@@ -4,6 +4,7 @@ class Person:
         self.add_hand()
         self.is_playing = True
         self.next_action = []
+        self.curr_hand = 0
 
     def add_hand(self, idx=-1):
         hand = Hand()
@@ -34,13 +35,60 @@ class Dealer(Person):
     def show_up_card(self):
         print(f"Dealer shows: {self.up_card}")
 
+    def play(self, players, shoe):
+        self.is_playing = self.check_playing(players)
+        while self.is_playing:
+            self.next_action = self.get_actions()
+            self.resolve_action(shoe)
+            self.update()
+        self.show_final()
+
+    def check_playing(self, players):  # If All Players Bust, No Play
+        for player in players:
+            for hand in player.hands:
+                if hand.result != 'bust':
+                    return True
+        self.hands[self.curr_hand].result = 'stand'
+        return False
+
+    def get_actions(self):
+        curr_hand = self.hands[self.curr_hand]
+        if curr_hand.num_soft_aces > 0:
+            min_score = 18
+        else:
+            min_score = 17
+        if curr_hand.total < min_score:
+            return 'hit'
+        else:
+            return 'stand'
+
+    def resolve_action(self, shoe):
+        curr_hand = self.hands[self.curr_hand]
+        if self.next_action == 'hit':
+            curr_hand.get_card(shoe.deal_card())
+        if self.next_action == 'stand':
+            curr_hand.is_done = True
+            curr_hand.result = 'stand'
+
+    def update(self):
+        curr_hand = self.hands[self.curr_hand]
+        if curr_hand.total > 21:
+            curr_hand.result = 'bust'
+            self.is_playing = False
+        if curr_hand.is_done:
+            self.is_playing = False
+
+    def show_final(self):
+        curr_hand = self.hands[self.curr_hand]
+        print(f"Dealer {curr_hand.result}")
+        curr_hand.show()
+
 
 class Player(Person):
     def __init__(self, chips, index, num_hands=1):
         super().__init__()
         self.index = index
         self.chips = chips
-        self.curr_hand = 0
 
     def play(self, dealer, shoe):
         print(f"\nSpot {self.index}\n")
@@ -53,7 +101,6 @@ class Player(Person):
             self.resolve_action(shoe)
             # Continue or Next
             self.update()
-            self.curr_hand += 1
         self.is_playing = False
         return None
 
@@ -114,6 +161,7 @@ class Player(Person):
     def update(self):
         curr_hand = self.hands[self.curr_hand]
         if curr_hand.total > 21:
+            curr_hand.show()
             print('busto')
             curr_hand.result = 'bust'
             curr_hand.is_done = True

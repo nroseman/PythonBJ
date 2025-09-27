@@ -9,7 +9,7 @@ class Card:
         self.value = value
         self.is_ace = False
         if self.rank == 'A':
-            self.is_soft = True
+            self.is_ace = True
 
     def __str__(self):
         return self.face
