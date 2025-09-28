@@ -1,5 +1,5 @@
 from player import Dealer, Player
-from cards import Card, Deck, Shoe
+from cards import Shoe
 
 
 class Table:
@@ -35,7 +35,7 @@ class Table:
     def set_wagers(self):
         for x, player in enumerate(self.spots):
             wager = int(input(
-                f"Spot {x+1}: What is your bet(min-{self.ruleset['Min Bet']} max-{player['chips']})? "))
+                f"Spot {x+1}: What is your bet(min-{self.ruleset['Min Bet']} max-{player.chips})? "))
             player['hands'][0].wager = wager
         return True
 
@@ -83,6 +83,46 @@ class Table:
                 spot.play(self.dealer, self.shoe)
         # Dealer Plays
         self.dealer.play(self.spots, self.shoe)
+        self.resolve()
+        return
+
+    def resolve(self):
+        print('\nROUND RESULTS:')
+    # DEALER HAS BLACKJACK
+        if self.dealer.hands[0].result == 'blackjack':
+            for spot in self.spots:
+                for hand in spot.hands:
+                    if hand.result != 'blackjack':
+                        spot.chips -= hand.wager
+                        hand.result = 'loss'
+                    else:
+                        hand.result = 'push'
+                    print(
+                        f"Player {player.index} Hand {hand.index} {*[card for card in hand.cards],} Result: {hand.result} Chips: {player.chips}")
+
+        # NO DEALER BLACKJACK
+        else:
+            for player in self.spots:
+                for hand in player.hands:
+                    if hand.result == 'blackjack':
+                        player.chips += int(hand['bet']
+                                            * self.ruleset['BJ Payout'])
+                    if hand.result == 'bust':
+                        player.chips -= hand.wager
+                        hand.result = 'loss'
+                    elif self.dealer.hands[0].result == 'bust':
+                        player.chips += hand.wager
+                        hand.result = 'win'
+                    elif self.dealer.hands[0].total > hand.total:
+                        player.chips -= hand.wager
+                        hand.result = 'loss'
+                    elif self.dealer.hands[0].total < hand.total:
+                        player.chips += hand.wager
+                        hand.result = 'win'
+                    else:
+                        hand.result = 'push'
+                    print(
+                        f"Player {player.index} Hand {hand.index} {*[card for card in hand.cards],} Result: {hand.result} Chips: {player.chips}")
         return
 
     def __str__(self):

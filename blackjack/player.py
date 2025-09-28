@@ -68,7 +68,8 @@ class Dealer(Person):
             curr_hand.get_card(shoe.deal_card())
         if self.next_action == 'stand':
             curr_hand.is_done = True
-            curr_hand.result = 'stand'
+            if curr_hand.result != 'blackjack':
+                curr_hand.result = 'stand'
 
     def update(self):
         curr_hand = self.hands[self.curr_hand]
