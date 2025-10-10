@@ -5,5 +5,8 @@ from table import Table
 table = Table()
 
 table.play()
+table.results_to_file()
+
 
 # TODO: Play Loop is not looping
+# TODO: MULTI HANDS CHIP RESULTS INCORRECT

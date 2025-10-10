@@ -1,7 +1,6 @@
 class Person:
     def __init__(self):
         self.hands = []
-        self.add_hand()
         self.is_playing = True
         self.next_action = []
         self.curr_hand = 0
@@ -28,12 +27,14 @@ class Person:
 class Dealer(Person):
     def __init__(self):
         super().__init__()
+        # TODO DOES THIS NEED TO BE A LIST FOR DEALER?
+        self.add_hand()
 
     def set_up_card(self):
         self.up_card = self.hands[0].cards[0]
 
     def show_up_card(self):
-        print(f"Dealer shows: {self.up_card}")
+        return f"Dealer shows: {self.up_card}"
 
     def play(self, players, shoe):
         self.is_playing = self.check_playing(players)
@@ -84,12 +85,18 @@ class Dealer(Person):
         print(f"Dealer {curr_hand.result}")
         curr_hand.show()
 
+    def get_final(self):
+        curr_hand = self.hands[self.curr_hand]
+        return f"Dealer {*[cards for cards in curr_hand.cards],}"
 
-class Player(Person):
+
+class Player(Person):  # TODO Need to accept different num_hands
     def __init__(self, chips, index, num_hands=1):
         super().__init__()
         self.index = index
         self.chips = chips
+        for hands in range(num_hands):
+            self.add_hand()
 
     def play(self, dealer, shoe):
         print(f"\nSpot {self.index}\n")
@@ -144,6 +151,7 @@ class Player(Person):
         if self.next_action == 'hit':
             curr_hand.get_card(shoe.deal_card())
         if self.next_action == 'double':
+            curr_hand.wager *= 2
             curr_hand.get_card(shoe.deal_card())
             curr_hand.show()
             curr_hand.is_done = True
@@ -174,6 +182,20 @@ class Player(Person):
         dealer.show_up_card()
         print(f"Hand {self.curr_hand}:")
         self.hands[self.curr_hand].show()
+
+    def show_final(self):
+        print(f"Spot {self.index}:")
+        for hand in self.hands:
+            print(
+                f"  Hand {hand.index} {*[card for card in hand.cards],} Result: {hand.result}")
+        print(f"  final chip count: {self.chips}")
+
+    def get_final(self):
+        final = [f"Spot {self.index}:",]
+        for hand in self.hands:
+            final.append(f"  {hand.get_final()}")
+        final.append(f"  chip count: {self.chips}\n")
+        return '\n'.join(final)
 
 
 class Hand:
@@ -223,6 +245,9 @@ class Hand:
             print(' blackjack!', end="")
         print(')')
         return True
+
+    def get_final(self):
+        return f"Hand {self.index} {*[cards for cards in self.cards],} total: {self.total} Result: {self.result}"
 
     def __str__(self):
         return f"Hand {self.index} {*[cards for cards in self.cards],} total: {self.total}"
